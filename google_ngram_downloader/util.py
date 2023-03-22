@@ -6,7 +6,6 @@ from string import ascii_lowercase, digits
 
 import requests
 
-
 URL_TEMPLATE = 'http://storage.googleapis.com/books/ngrams/books/{}'
 # URL_TEMPLATE = 'http://localhost:8001/{}'
 
@@ -110,7 +109,7 @@ def iter_google_store(ngram_len, lang="eng", indices=None, verbose=False):
     :param bool verbose: if `True`, then the debug information is shown to `sys.stderr`.
 
     """
-    version = '20120701'
+    version = '20200217'
     session = requests.Session()
 
     indices = get_indices(ngram_len) if indices is None else indices
