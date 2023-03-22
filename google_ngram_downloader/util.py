@@ -9,7 +9,7 @@ import requests
 URL_TEMPLATE = 'http://storage.googleapis.com/books/ngrams/books/{}'
 # URL_TEMPLATE = 'http://localhost:8001/{}'
 
-FILE_TEMPLATE = 'googlebooks-{lang}-all-{ngram_len}gram-{version}-{index}.gz'
+FILE_TEMPLATE = '{version}/{lang}/{ngram_len}-{index}-of-{all_index}.gz'
 
 
 Record = collections.namedtuple('Record', 'ngram year match_count volume_count')
@@ -21,6 +21,13 @@ class StreamInterruptionError(Exception):
     def __init__(self, url, message):
         self.url = url
         self.message = message
+
+
+def format_digit(digit: int) -> str:
+    digit = str(digit)
+    while len(digit) < 5:
+        digit = '0' + digit
+    return digit
 
 
 def readline_google_store(ngram_len, lang='eng', indices=None, chunk_size=1024 ** 2, verbose=False):
@@ -51,11 +58,11 @@ def readline_google_store(ngram_len, lang='eng', indices=None, chunk_size=1024 *
 
                 for line in lines:
                     line = line.decode('utf-8')
-                    data = line.split('\t')
-                    assert len(data) == 4
-                    ngram = data[0]
-                    other = map(int, data[1:])
-                    yield Record(ngram, *other)
+                    yield line
+                    # assert len(data) == 4
+                    # ngram = data[0]
+                    # other = map(int, data[1:])
+                    # yield Record(ngram, *other)
 
             if last:
                 raise StreamInterruptionError(
@@ -112,14 +119,16 @@ def iter_google_store(ngram_len, lang="eng", indices=None, verbose=False):
     version = '20200217'
     session = requests.Session()
 
-    indices = get_indices(ngram_len) if indices is None else indices
+    all_index = format_digit(indices)
+    indices = get_indices(ngram_len) if indices is None else range(indices)
 
     for index in indices:
         fname = FILE_TEMPLATE.format(
             lang=lang,
             ngram_len=ngram_len,
             version=version,
-            index=index,
+            index=format_digit(index),
+            all_index=all_index,
         )
 
         url = URL_TEMPLATE.format(fname)
